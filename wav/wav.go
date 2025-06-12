@@ -1,0 +1,91 @@
+package wav
+
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+	"os"
+	// "encoding/json"
+)
+
+// WavHeader defines the structure of a WAV header
+type WavHeader struct {
+	ChunkID       [4]byte
+	ChunkSize     uint32
+	Format        [4]byte
+	Subchunk1ID   [4]byte
+	Subchunk1Size uint32
+	AudioFormat   uint16
+	NumChannels   uint16
+	SampleRate    uint32
+	BytesPerSec   uint32
+	BlockAlign    uint16
+	BitsPerSample uint16
+	Subchunk2ID   [4]byte
+	Subchunk2Size uint32
+}
+
+// WavInfo defines a struct containing information extracted from the WAV header
+type WavInfo struct {
+	Channels   int
+	SampleRate int
+	Data       []byte
+	Duration   float64
+}
+
+func ReadWavInfo(filename string) (*WavInfo, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) < 44 {
+		return nil, errors.New("invalid WAV file size (too small)")
+	}
+
+	// Read header chunks
+	var header WavHeader
+	err = binary.Read(bytes.NewReader(data[:44]), binary.LittleEndian, &header)
+	if err != nil {
+		return nil, err
+	}
+
+	if string(header.ChunkID[:]) != "RIFF" || string(header.Format[:]) != "WAVE" || header.AudioFormat != 1 {
+		return nil, errors.New("invalid WAV header format")
+	}
+
+	// Extract information
+	info := &WavInfo{
+		Channels:   int(header.NumChannels),
+		SampleRate: int(header.SampleRate),
+		Data:       data[44:],
+	}
+
+	// Calculate audio duration (assuming data contains PCM data)
+	if header.BitsPerSample == 16 {
+		info.Duration = float64(len(info.Data)) / float64(int(header.NumChannels)*2*int(header.SampleRate))
+	} else {
+		return nil, errors.New("unsupported bits per sample format")
+	}
+
+	return info, nil
+}
+
+// WavBytesToFloat64 converts a slice of bytes from a .wav file to a slice of float64 samples
+func WavBytesToSamples(input []byte) ([]float64, error) {
+	if len(input)%2 != 0 {
+		return nil, errors.New("invalid input length")
+	}
+
+	numSamples := len(input) / 2
+	output := make([]float64, numSamples)
+
+	for i := 0; i < len(input); i += 2 {
+		// Interpret bytes as a 16-bit signed integer (little-endian)
+		sample := int16(binary.LittleEndian.Uint16(input[i : i+2]))
+
+		// Scale the sample to the range [-1, 1]
+		output[i/2] = float64(sample) / 32768.0
+	}
+	return output, nil
+}
