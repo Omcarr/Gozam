@@ -4,11 +4,11 @@ import (
 	// "context"
 	// // "fmt"
 	// "gozam/audiofingerprint"
+	// "gozam/db"
 	// "gozam/utils"
 	// "gozam/wav"
-
-	// "gozam/db"
 	"log"
+	// "strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -144,11 +144,62 @@ func main() {
 
 	//<---------------------9------------------------>
 	//convert to wav
-	
+	// song_path := "./downloads/viva la vida_cut.mp3"
+	// channels := 1
+	// wav.ConvertToWAV(song_path, channels)
 
+// 	//<---------------------10------------------------>
+// 	// make wav into bytes
+// 	song_path := "./downloads/viva la vida_cut.wav"
+// 	waveInfo, err := wav.ReadWavInfo(song_path)
+// 	if err != nil {
+// 		log.Fatalf("error, %v", err)
+// 	}
 
+// 	// <--------------11------------------------->
+// 	// making wavbytes from samples
+// 	samples, err := wav.WavBytesToSamples(waveInfo.Data)
+// 	if err != nil {
+// 		log.Fatalf("error converting wav bytes to float64: %v", err)
+// 	}
 
+// 	log.Print("erm what thw sigma: client side")
+// 	// log.Print(samples)
 
+// 	// <--------------11------------------------->
+// 	//creating spectogram
+// 	spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
+// 	if err != nil {
+// 		log.Fatalf("error creating spectrogram: %v", err)
+// 	}
+// 	// log.Print(spectrogram)
 
+// 	// <--------------12------------------------>
+// 	// extract peaks ie most significant frequencies from each band
+// 	peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+// 	// log.Print(peaks[:10])
+
+// 	// <--------------13------------------------->
+// 	//create fingerprints
+// 	TestsongID := utils.GenerateUniqueID()
+// 	log.Print(TestsongID)
+// 	samplefingerprint := audiofingerprint.CreateFingerprint(peaks, TestsongID)
+
+// 	sampleFingerprintMap := make(map[uint32]uint32)
+// 	for address, couple := range samplefingerprint {
+// 		sampleFingerprintMap[address] = couple.AnchorTimeMs
+// 	}
+// 	// log.Print(sampleFingerprintMap)
+
+// 	//match fingerprints
+// 	matches, timeDur, err := audiofingerprint.FindMatchesFGP(sampleFingerprintMap)
+// 	if err != nil {
+// 		log.Fatal("matching algo failed")
+// 	}
+// 	log.Print(matches, timeDur)
+
+// 	for _, match := range matches {
+// 		log.Print(match.Timestamp)
+// 	}
 
 }

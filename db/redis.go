@@ -42,21 +42,28 @@ func StoreFingerprints(ctx context.Context, client *redis.Client, fingerprints m
 	return nil
 }
 
-// func GetFingerprints(ctx context.Context, client *redis.Client, songID string) (map[uint32]models.Couple, error) {
-// 	key := "fingerprints:" + fmt.Sprint(songID)
-// 	raw, err := client.HGetAll(ctx, key).Result()
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func GetCouples(client *redis.Client, addresses []uint32) (map[uint32][]models.Couple, error) {
+	result := make(map[uint32][]models.Couple)
 
-// 	result := make(map[uint32]models.Couple)
-// 	for k, v := range raw {
-// 		var couple models.Couple
-// 		if err := json.Unmarshal([]byte(v), &couple); err != nil {
-// 			continue
-// 		}
-// 		id, _ := strconv.ParseUint(k, 10, 32)
-// 		result[uint32(id)] = couple
-// 	}
-// 	return result, nil
-// }
+	for _, address := range addresses {
+		key := fmt.Sprintf("fp:%d", address)
+		ctx := context.Background()
+
+		raw, err := client.Get(ctx, key).Result()
+		if err != nil {
+			if err == redis.Nil {
+				continue // Key doesn't exist
+			}
+			return nil, err
+		}
+
+		var couple models.Couple
+		if err := json.Unmarshal([]byte(raw), &couple); err != nil {
+			continue
+		}
+
+		result[address] = append(result[address], couple)
+	}
+
+	return result, nil
+}
