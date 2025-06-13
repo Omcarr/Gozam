@@ -2,12 +2,13 @@ package main
 
 import (
 	// "context"
-	// // "fmt"
-	// "gozam/audiofingerprint"
+	// // // "fmt"
+	"gozam/audiofingerprint"
 	// "gozam/db"
-	// "gozam/utils"
-	// "gozam/wav"
+	"gozam/utils"
+	"gozam/wav"
 	"log"
+
 	// "strconv"
 
 	"github.com/joho/godotenv"
@@ -53,13 +54,13 @@ func main() {
 
 	//<--------------2------------------------->
 	//converted the song to wav
-	// song_path := "downloads/Coldplay - Viva La Vida (Official Video).m4a"
+	// song_path := "downloads/yellow coldplay.mp3"
 	// channels := 1
 	// wav.ConvertToWAV(song_path, channels)
 
 	// // <--------------3------------------------->
 	// // make wav into bytes
-	// song_path := "downloads/Coldplay - Viva La Vida (Official Video).wav"
+	// song_path := "downloads/yellow coldplay.wav"
 	// waveInfo, err := wav.ReadWavInfo(song_path)
 	// if err != nil {
 	// 	log.Fatalf("error, %v", err)
@@ -75,7 +76,7 @@ func main() {
 	// }
 
 	// log.Print("erm what thw sigma")
-	// // log.Print(samples)
+	// // // log.Print(samples)
 
 	// // <--------------5------------------------->
 	// //creating spectogram
@@ -83,7 +84,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatalf("error creating spectrogram: %v", err)
 	// }
-	// // log.Print(spectrogram)
+	// log.Print(spectrogram)
 
 	// // <--------------6------------------------->
 	// //viusalize the spectrogram in freq vs time. intensity based on db
@@ -143,63 +144,63 @@ func main() {
 	//client side getting a clip of <10 sec and creating address:couple from them then from couples time and songid play the song
 
 	//<---------------------9------------------------>
-	//convert to wav
-	// song_path := "./downloads/viva la vida_cut.mp3"
+	// convert to wav
+	// song_path := "./downloads/yellow noisy.mp3"
 	// channels := 1
 	// wav.ConvertToWAV(song_path, channels)
 
-// 	//<---------------------10------------------------>
-// 	// make wav into bytes
-// 	song_path := "./downloads/viva la vida_cut.wav"
-// 	waveInfo, err := wav.ReadWavInfo(song_path)
-// 	if err != nil {
-// 		log.Fatalf("error, %v", err)
-// 	}
+	// 	//<---------------------10------------------------>
+		// make wav into bytes
+		song_path := "./downloads/viva la vida_cut.wav"
+		waveInfo, err := wav.ReadWavInfo(song_path)
+		if err != nil {
+			log.Fatalf("error, %v", err)
+		}
 
-// 	// <--------------11------------------------->
-// 	// making wavbytes from samples
-// 	samples, err := wav.WavBytesToSamples(waveInfo.Data)
-// 	if err != nil {
-// 		log.Fatalf("error converting wav bytes to float64: %v", err)
-// 	}
+		// <--------------11------------------------->
+		// making wavbytes from samples
+		samples, err := wav.WavBytesToSamples(waveInfo.Data)
+		if err != nil {
+			log.Fatalf("error converting wav bytes to float64: %v", err)
+		}
 
-// 	log.Print("erm what thw sigma: client side")
-// 	// log.Print(samples)
+		log.Print("erm what thw sigma: client side")
+		// log.Print(samples)
 
-// 	// <--------------11------------------------->
-// 	//creating spectogram
-// 	spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
-// 	if err != nil {
-// 		log.Fatalf("error creating spectrogram: %v", err)
-// 	}
-// 	// log.Print(spectrogram)
+		// <--------------11------------------------->
+		//creating spectogram
+		spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
+		if err != nil {
+			log.Fatalf("error creating spectrogram: %v", err)
+		}
+		// log.Print(spectrogram)
 
-// 	// <--------------12------------------------>
-// 	// extract peaks ie most significant frequencies from each band
-// 	peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
-// 	// log.Print(peaks[:10])
+		// <--------------12------------------------>
+		// extract peaks ie most significant frequencies from each band
+		peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+		// log.Print(peaks[:10])
 
-// 	// <--------------13------------------------->
-// 	//create fingerprints
-// 	TestsongID := utils.GenerateUniqueID()
-// 	log.Print(TestsongID)
-// 	samplefingerprint := audiofingerprint.CreateFingerprint(peaks, TestsongID)
+		// <--------------13------------------------->
+		//create fingerprints
+		TestsongID := utils.GenerateUniqueID()
+		log.Print(TestsongID)
+		samplefingerprint := audiofingerprint.CreateFingerprint(peaks, TestsongID)
 
-// 	sampleFingerprintMap := make(map[uint32]uint32)
-// 	for address, couple := range samplefingerprint {
-// 		sampleFingerprintMap[address] = couple.AnchorTimeMs
-// 	}
-// 	// log.Print(sampleFingerprintMap)
+		sampleFingerprintMap := make(map[uint32]uint32)
+		for address, couple := range samplefingerprint {
+			sampleFingerprintMap[address] = couple.AnchorTimeMs
+		}
+		// log.Print(sampleFingerprintMap)
 
-// 	//match fingerprints
-// 	matches, timeDur, err := audiofingerprint.FindMatchesFGP(sampleFingerprintMap)
-// 	if err != nil {
-// 		log.Fatal("matching algo failed")
-// 	}
-// 	log.Print(matches, timeDur)
+		//match fingerprints
+		matches, timeDur, err := audiofingerprint.FindMatchesFGP(sampleFingerprintMap)
+		if err != nil {
+			log.Fatal("matching algo failed")
+		}
+		log.Print(matches, timeDur)
 
-// 	for _, match := range matches {
-// 		log.Print(match.Timestamp)
-// 	}
+		for _, match := range matches {
+			log.Print(match.Timestamp)
+		}
 
 }
