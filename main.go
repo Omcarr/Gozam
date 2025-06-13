@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"gozam/audiofingerprint"
-	"gozam/utils"
-	"gozam/wav"
+	// "context"
+	// // "fmt"
+	// "gozam/audiofingerprint"
+	// "gozam/utils"
+	// "gozam/wav"
 
-	"gozam/db"
+	// "gozam/db"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -23,14 +23,14 @@ func main() {
 		log.Println("No .env file found, continuing...")
 	}
 
-	ctx := context.Background()
+	// ctx := context.Background()
 
-	//new redis connection
-	redisClient, err := db.NewRedisClient()
-	if err != nil {
-		log.Fatal("failed to establish redis connection")
-	}
-	log.Print(redisClient)
+	// //new redis connection
+	// redisClient, err := db.NewRedisClient()
+	// if err != nil {
+	// 	log.Fatal("failed to establish redis connection")
+	// }
+	// log.Print(redisClient)
 
 	//<--------------1------------------------->
 	//downloaded metadata and song
@@ -57,72 +57,73 @@ func main() {
 	// channels := 1
 	// wav.ConvertToWAV(song_path, channels)
 
-	// <--------------3------------------------->
-	// make wav into bytes
-	song_path := "downloads/Coldplay - Viva La Vida (Official Video).wav"
-	waveInfo, err := wav.ReadWavInfo(song_path)
-	if err != nil {
-		log.Fatalf("error, %v", err)
-	}
+	// // <--------------3------------------------->
+	// // make wav into bytes
+	// song_path := "downloads/Coldplay - Viva La Vida (Official Video).wav"
+	// waveInfo, err := wav.ReadWavInfo(song_path)
+	// if err != nil {
+	// 	log.Fatalf("error, %v", err)
+	// }
 
-	// log.Print(waveInfo.SampleRate)
+	// // log.Print(waveInfo.SampleRate)
 
-	// <--------------4------------------------->
-	// making wavbytes from samples
-	samples, err := wav.WavBytesToSamples(waveInfo.Data)
-	if err != nil {
-		log.Fatalf("error converting wav bytes to float64: %v", err)
-	}
+	// // <--------------4------------------------->
+	// // making wavbytes from samples
+	// samples, err := wav.WavBytesToSamples(waveInfo.Data)
+	// if err != nil {
+	// 	log.Fatalf("error converting wav bytes to float64: %v", err)
+	// }
 
-	log.Print("erm what thw sigma")
-	// log.Print(samples)
+	// log.Print("erm what thw sigma")
+	// // log.Print(samples)
 
-	// <--------------5------------------------->
-	//creating spectogram
-	spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
-	if err != nil {
-		log.Fatalf("error creating spectrogram: %v", err)
-	}
-	// log.Print(spectrogram)
+	// // <--------------5------------------------->
+	// //creating spectogram
+	// spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
+	// if err != nil {
+	// 	log.Fatalf("error creating spectrogram: %v", err)
+	// }
+	// // log.Print(spectrogram)
 
-	// <--------------6------------------------->
-	//viusalize the spectrogram in freq vs time. intensity based on db
-	magSpec, err := audiofingerprint.MagnitudeSpectrogram(spectrogram)
-	if err != nil {
-		log.Fatalf("error getting magnitudes of the spectrogram: %v", err)
-	}
+	// // <--------------6------------------------->
+	// //viusalize the spectrogram in freq vs time. intensity based on db
+	// magSpec, err := audiofingerprint.MagnitudeSpectrogram(spectrogram)
+	// if err != nil {
+	// 	log.Fatalf("error getting magnitudes of the spectrogram: %v", err)
+	// }
 
-	output_path := "./downloads/spectrograms/viva_la_vida_spectrogram.png"
-	audiofingerprint.SaveSpectrogramImage(magSpec, output_path)
+	// output_path := "./downloads/spectrograms/viva_la_vida_spectrogram.png"
+	// audiofingerprint.SaveSpectrogramImage(magSpec, output_path)
 
-	// <--------------7------------------------->
-	// extract peaks ie most significant frequencies from each band
-	peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
-	// log.Print(peaks[:10])
+	// // <--------------7------------------------->
+	// // extract peaks ie most significant frequencies from each band
+	// peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+	// // log.Print(peaks[:10])
 
-	// <--------------8------------------------->
-	//create fingerprints
-	songID := utils.GenerateUniqueID()
-	fingerprints := audiofingerprint.CreateFingerprint(peaks, songID)
+	// // <--------------8------------------------->
+	// //create fingerprints
+	// songID := utils.GenerateUniqueID()
+	// log.Print(songID)
+	// fingerprints := audiofingerprint.CreateFingerprint(peaks, songID)
 
 	// log.Print(fingerprints)
-	count := 0
-	for k, v := range fingerprints {
-		log.Printf("%s: %d\n", k, v, "storing")
-		count++
-		if count >= 5 {
-			break
-		}
-	}
+	// count := 0
+	// for k, v := range fingerprints {
+	// 	log.Printf("%s: %d\n", k, v, "storing")
+	// 	count++
+	// 	if count >= 5 {
+	// 		break
+	// 	}
+	// }
 
 	//<---------------------8------------------------>
 	//save fingerprints to redis
 
 	// Store
-	err = db.StoreFingerprints(ctx, redisClient, fmt.Sprint(songID), fingerprints)
-	if err != nil {
-		log.Fatalf("Failed to store fingerprints: %v", err)
-	}
+	// err = db.StoreFingerprints(ctx, redisClient, fingerprints)
+	// if err != nil {
+	// 	log.Fatalf("Failed to store fingerprints: %v", err)
+	// }
 
 	// // Retrieve
 	// retrieved, err := db.GetFingerprints(ctx, redisClient, fmt.Sprint(songID))
@@ -138,5 +139,16 @@ func main() {
 	// 		break
 	// 	}
 	// }
+
+	//client side getting a clip of <10 sec and creating address:couple from them then from couples time and songid play the song
+
+	//<---------------------9------------------------>
+	//convert to wav
+	
+
+
+
+
+
 
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gozam/models"
 	"os"
-	"strconv"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -26,37 +25,38 @@ func NewRedisClient() (*redis.Client, error) {
 	return client, nil
 }
 
-func StoreFingerprints(ctx context.Context, client *redis.Client, songID string, fingerprints map[uint32]models.Couple) error {
-	// Convert map[string]uint32 to map[string]string (HSET requires string values)
-	data := make(map[string]string, len(fingerprints))
-	for k, v := range fingerprints {
-		encoded, err := json.Marshal(v)
+func StoreFingerprints(ctx context.Context, client *redis.Client, fingerprints map[uint32]models.Couple) error {
+
+	for address, couple := range fingerprints {
+		key := fmt.Sprintf("fp:%d", address)
+		value, err := json.Marshal(couple)
 		if err != nil {
-			continue
+			fmt.Print(err)
 		}
-		data[fmt.Sprint(k)] = string(encoded)
-	}
 
-	// Store as Redis hash
-	key := "fingerprints:" + songID
-	return client.HSet(ctx, key, data).Err()
+		if err := client.Set(ctx, key, value, 0).Err(); err != nil {
+			return err // or collect errors if partial failure is OK
+		}
+
+	}
+	return nil
 }
 
-func GetFingerprints(ctx context.Context, client *redis.Client, songID string) (map[uint32]models.Couple, error) {
-	key := "fingerprints:" + fmt.Sprint(songID)
-	raw, err := client.HGetAll(ctx, key).Result()
-	if err != nil {
-		return nil, err
-	}
+// func GetFingerprints(ctx context.Context, client *redis.Client, songID string) (map[uint32]models.Couple, error) {
+// 	key := "fingerprints:" + fmt.Sprint(songID)
+// 	raw, err := client.HGetAll(ctx, key).Result()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	result := make(map[uint32]models.Couple)
-	for k, v := range raw {
-		var couple models.Couple
-		if err := json.Unmarshal([]byte(v), &couple); err != nil {
-			continue
-		}
-		id, _ := strconv.ParseUint(k, 10, 32)
-		result[uint32(id)] = couple
-	}
-	return result, nil
-}
+// 	result := make(map[uint32]models.Couple)
+// 	for k, v := range raw {
+// 		var couple models.Couple
+// 		if err := json.Unmarshal([]byte(v), &couple); err != nil {
+// 			continue
+// 		}
+// 		id, _ := strconv.ParseUint(k, 10, 32)
+// 		result[uint32(id)] = couple
+// 	}
+// 	return result, nil
+// }
