@@ -4,6 +4,7 @@ import (
 	// "fmt"
 
 	"gozam/audiofingerprint"
+	"gozam/utils"
 	"gozam/wav"
 	"log"
 )
@@ -74,5 +75,32 @@ func main() {
 
 	output_path := "./downloads/spectrograms/viva_la_vida_spectrogram.png"
 	audiofingerprint.SaveSpectrogramImage(magSpec, output_path)
+
+	// <--------------7------------------------->
+	// extract peaks ie most significant frequencies from each band
+	peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+	log.Print(peaks[:10])
+
+	// <--------------7------------------------->
+	//create fingerprints
+	songID := utils.GenerateUniqueID()
+	fingerprints := audiofingerprint.CreateFingerprint(peaks, songID)
+
+	// log.Print(fingerprints)
+	// count := 0
+	// for k, v := range fingerprints {
+	// 	log.Printf("%s: %d\n", k, v)
+	// 	count++
+	// 	if count >= 10 {
+	// 		break
+	// 	}
+	// }
+
+
+
+	//<---------------------8------------------------>
+	//save fingerprints to redis
+
+
 
 }

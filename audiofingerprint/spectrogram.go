@@ -14,6 +14,12 @@ const (
 	hopSize     = freqBinSize / 32
 )
 
+
+type Peak struct {
+	Time float64
+	Freq complex128
+}
+
 // remove low frequencies, downsample then perform STFT
 func Spectrogram(sample []float64, sampleRate int) ([][]complex128, error) {
 	filteredSample := LowPassFilter(maxFreq, float64(sampleRate), sample)
@@ -130,4 +136,72 @@ func MagnitudeSpectrogram(spec [][]complex128) ([][]float64, error) {
 		}
 	}
 	return magSpec, nil
+}
+
+
+
+// ExtractPeaks analyzes a spectrogram and extracts significant peaks in the frequency domain over time.
+func ExtractPeaks(spectrogram [][]complex128, audioDuration float64) []Peak {
+	if len(spectrogram) < 1 {
+		return []Peak{}
+	}
+
+	type maxies struct {
+		maxMag  float64
+		maxFreq complex128
+		freqIdx int
+	}
+
+	bands := []struct{ min, max int }{{0, 10}, {10, 20}, {20, 40}, {40, 80}, {80, 160}, {160, 512}}
+
+	var peaks []Peak
+	binDuration := audioDuration / float64(len(spectrogram))
+
+	for binIdx, bin := range spectrogram {
+		var maxMags []float64
+		var maxFreqs []complex128
+		var freqIndices []float64
+
+		binBandMaxies := []maxies{}
+		for _, band := range bands {
+			var maxx maxies
+			var maxMag float64
+			for idx, freq := range bin[band.min:band.max] {
+				magnitude := cmplx.Abs(freq)
+				if magnitude > maxMag {
+					maxMag = magnitude
+					freqIdx := band.min + idx
+					maxx = maxies{magnitude, freq, freqIdx}
+				}
+			}
+			binBandMaxies = append(binBandMaxies, maxx)
+		}
+
+		for _, value := range binBandMaxies {
+			maxMags = append(maxMags, value.maxMag)
+			maxFreqs = append(maxFreqs, value.maxFreq)
+			freqIndices = append(freqIndices, float64(value.freqIdx))
+		}
+
+		// Calculate the average magnitude
+		var maxMagsSum float64
+		for _, max := range maxMags {
+			maxMagsSum += max
+		}
+		avg := maxMagsSum / float64(len(maxFreqs)) // * coefficient
+
+		// Add peaks that exceed the average magnitude
+		for i, value := range maxMags {
+			if value > avg {
+				peakTimeInBin := freqIndices[i] * binDuration / float64(len(bin))
+
+				// Calculate the absolute time of the peak
+				peakTime := float64(binIdx)*binDuration + peakTimeInBin
+
+				peaks = append(peaks, Peak{Time: peakTime, Freq: maxFreqs[i]})
+			}
+		}
+	}
+
+	return peaks
 }

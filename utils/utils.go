@@ -2,8 +2,12 @@ package utils
 
 import (
 	"io"
+	"math/rand"
 	"os"
+	"time"
 )
+
+var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func MoveFile(sourcePath string, destinationPath string) error {
 	srcFile, err := os.Open(sourcePath)
@@ -33,4 +37,9 @@ func MoveFile(sourcePath string, destinationPath string) error {
 	}
 
 	return nil
+}
+
+func GenerateUniqueID() uint32 {
+	randomNumber := rnd.Uint32()
+	return randomNumber
 }
