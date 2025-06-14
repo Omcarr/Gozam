@@ -1,12 +1,13 @@
 package main
 
 import (
-	// "context"
-	// // // "fmt"
-	"gozam/audiofingerprint"
-	// "gozam/db"
-	"gozam/utils"
-	"gozam/wav"
+	// // "context"
+	// // // // "fmt"
+	// "gozam/audiofingerprint"
+	// // "gozam/db"
+
+	// "gozam/wav"
+
 	"log"
 
 	// "strconv"
@@ -40,11 +41,18 @@ func main() {
 	// url := "https://www.youtube.com/watch?v=dvgZkm1xWPE"
 	// outputPath := "./downloads"
 
-	// // Get video metadata
-	// // err := downloader.GetVideoDetails(url)
-	// // if err != nil {
-	// // 	log.Fatalf("Error getting video details: %v", err)
-	// // }
+	// Get video metadata
+	// data, err := downloader.GetVideoDetails(url)
+	// if err != nil {
+	// 	log.Fatalf("Error getting video details: %v", err)
+	// }
+
+	// songData := data.Items[0]
+	// ytID := songData.ID
+	// songTitle := songData.Snippet.Title
+	// songArtist := songData.Snippet.ChannelTitle
+	// songID := utils.GenerateUniqueID()
+	// log.Print(songID, ytID, songTitle, songArtist)
 
 	// // Download the audio
 	// err := downloader.DownloadYTaudio(url, outputPath)
@@ -103,8 +111,6 @@ func main() {
 
 	// // <--------------8------------------------->
 	// //create fingerprints
-	// songID := utils.GenerateUniqueID()
-	// log.Print(songID)
 	// fingerprints := audiofingerprint.CreateFingerprint(peaks, songID)
 
 	// log.Print(fingerprints)
@@ -145,62 +151,62 @@ func main() {
 
 	//<---------------------9------------------------>
 	// convert to wav
-	// song_path := "./downloads/yellow noisy.mp3"
+	// song_path := "./downloads/rickroll.mp3"
 	// channels := 1
 	// wav.ConvertToWAV(song_path, channels)
 
 	// 	//<---------------------10------------------------>
-		// make wav into bytes
-		song_path := "./downloads/viva la vida_cut.wav"
-		waveInfo, err := wav.ReadWavInfo(song_path)
-		if err != nil {
-			log.Fatalf("error, %v", err)
-		}
+	// make wav into bytes
+	// song_path := "./downloads/viva la vida_cut.wav"
+	// waveInfo, err := wav.ReadWavInfo(song_path)
+	// if err != nil {
+	// 	log.Fatalf("error, %v", err)
+	// }
 
-		// <--------------11------------------------->
-		// making wavbytes from samples
-		samples, err := wav.WavBytesToSamples(waveInfo.Data)
-		if err != nil {
-			log.Fatalf("error converting wav bytes to float64: %v", err)
-		}
+	// // <--------------11------------------------->
+	// // making wavbytes from samples
+	// samples, err := wav.WavBytesToSamples(waveInfo.Data)
+	// if err != nil {
+	// 	log.Fatalf("error converting wav bytes to float64: %v", err)
+	// }
 
-		log.Print("erm what thw sigma: client side")
-		// log.Print(samples)
+	// log.Print("erm what thw sigma: client side")
+	// // log.Print(samples)
 
-		// <--------------11------------------------->
-		//creating spectogram
-		spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
-		if err != nil {
-			log.Fatalf("error creating spectrogram: %v", err)
-		}
-		// log.Print(spectrogram)
+	// // <--------------11------------------------->
+	// //creating spectogram
+	// spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
+	// if err != nil {
+	// 	log.Fatalf("error creating spectrogram: %v", err)
+	// }
+	// // log.Print(spectrogram)
 
-		// <--------------12------------------------>
-		// extract peaks ie most significant frequencies from each band
-		peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
-		// log.Print(peaks[:10])
+	// // <--------------12------------------------>
+	// // extract peaks ie most significant frequencies from each band
+	// peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+	// // log.Print(peaks[:10])
 
-		// <--------------13------------------------->
-		//create fingerprints
-		TestsongID := utils.GenerateUniqueID()
-		log.Print(TestsongID)
-		samplefingerprint := audiofingerprint.CreateFingerprint(peaks, TestsongID)
+	// // <--------------13------------------------->
+	// //create fingerprints
+	// TestsongID := utils.GenerateUniqueID()
+	// log.Print(TestsongID)
+	// samplefingerprint := audiofingerprint.CreateFingerprint(peaks, TestsongID)
 
-		sampleFingerprintMap := make(map[uint32]uint32)
-		for address, couple := range samplefingerprint {
-			sampleFingerprintMap[address] = couple.AnchorTimeMs
-		}
-		// log.Print(sampleFingerprintMap)
+	// sampleFingerprintMap := make(map[uint32]uint32)
+	// for address, couple := range samplefingerprint {
+	// 	sampleFingerprintMap[address] = couple.AnchorTimeMs
+	// }
+	// // log.Print(sampleFingerprintMap)
 
-		//match fingerprints
-		matches, timeDur, err := audiofingerprint.FindMatchesFGP(sampleFingerprintMap)
-		if err != nil {
-			log.Fatal("matching algo failed")
-		}
-		log.Print(matches, timeDur)
+	// //match fingerprints
+	// matches, timeDur, err := audiofingerprint.FindMatchesFGP(sampleFingerprintMap)
+	// if err != nil {
+	// 	log.Fatal("matching algo failed")
+	// }
+	// log.Print(matches, timeDur)
 
-		for _, match := range matches {
-			log.Print(match.Timestamp)
-		}
+	// for _, match := range matches {
+	// 	log.Print(match.Timestamp)
+	// }
 
 }

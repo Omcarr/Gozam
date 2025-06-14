@@ -2,22 +2,30 @@ package downloader
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"time"
 )
 
-type YTVideoInfo struct {
-	Title       string `json:"title"`
-	ID          string `json:"id"`
-	WebpageURL  string `json:"webpage_url"`
-	Uploader    string `json:"uploader"`
-	ChannelID   string `json:"channel_id"`
-	Duration    int    `json:"duration"`
-	Description string `json:"description"`
-	UploadDate  string `json:"upload_date"`
-	ViewCount   int    `json:"view_count"`
-	LikeCount   int    `json:"like_count"`
+// Define outer structure
+type YouTubeResponse struct {
+	Items []VideoItem `json:"items"`
+}
+
+// Define video item
+type VideoItem struct {
+	ID      string  `json:"id"`
+	Snippet Snippet `json:"snippet"`
+}
+
+// Snippet info (title, description, thumbnails)
+type Snippet struct {
+	Title        string `json:"title"`
+	ChannelTitle string `json:"channelTitle"`
 }
 
 func DownloadYTaudio(id, path string) error {
@@ -48,21 +56,34 @@ func DownloadYTaudio(id, path string) error {
 	return nil
 }
 
-func GetVideoDetails(id string) error {
-	url := id
-	cmd := exec.Command("yt-dlp", "-j", url)
-	out, err := cmd.Output()
+func GetVideoDetails(id string) (*YouTubeResponse, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	parsedURL, err := url.Parse(id)
 	if err != nil {
-		log.Fatalf("Failed to get video info: %v", err)
+		return nil, err
 	}
 
-	var info YTVideoInfo
-	if err := json.Unmarshal(out, &info); err != nil {
-		log.Fatalf("Failed to parse video info: %v", err)
+	parsedId := parsedURL.Query().Get("v")
+
+	ytApiKey := os.Getenv("ytApiKey")
+	apiURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/videos?id=%s&key=%s&part=snippet,statistics", parsedId, ytApiKey)
+
+	response, err := client.Get(apiURL)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed: %s", response.Status)
 	}
 
-	log.Printf("Title: %s\nUploader: %s\nDuration: %d seconds\nViews: %d\nURL: %s\n",
-		info.Title, info.Uploader, info.Duration, info.ViewCount, info.WebpageURL)
+	var ytResp YouTubeResponse
+	err = json.NewDecoder(response.Body).Decode(&ytResp)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return &ytResp, nil
 }
