@@ -8,4 +8,5 @@ import (
 
 func SongRouter(router *gin.Engine) {
 	router.GET("/song", controllers.SongHealthCheck)
+	router.POST("/register_song", controllers.RegisterSongHandler)
 }

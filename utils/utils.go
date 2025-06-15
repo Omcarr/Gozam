@@ -4,10 +4,12 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"regexp"
 	"time"
 )
 
 var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
+var ytRegex = regexp.MustCompile(`^https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]{11}$`)
 
 func MoveFile(sourcePath string, destinationPath string) error {
 	srcFile, err := os.Open(sourcePath)
@@ -42,4 +44,8 @@ func MoveFile(sourcePath string, destinationPath string) error {
 func GenerateUniqueID() uint32 {
 	randomNumber := rnd.Uint32()
 	return randomNumber
+}
+
+func IsValidYouTubeURL(url string) bool {
+	return ytRegex.MatchString(url)
 }
