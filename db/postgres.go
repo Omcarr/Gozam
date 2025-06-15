@@ -21,7 +21,10 @@ func NewPostgresClient() (*gorm.DB, error) {
 	}
 
 	// Automigrate models
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Song{},
+	); err != nil {
 		return nil, err // Return migration error
 	}
 
