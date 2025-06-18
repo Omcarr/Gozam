@@ -37,7 +37,7 @@ func main() {
 
 	//routers
 	routers.UserRouter(router)
-	routers.SongRouter(router)
+	routers.SongRouter(router, redisClient, postgresClient)
 
 	if err := router.Run(":8000"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
