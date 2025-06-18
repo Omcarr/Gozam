@@ -30,3 +30,22 @@ func NewPostgresClient() (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func InsertSong(song *models.Song, postgresClient *gorm.DB) error {
+	result := postgresClient.Create(&song)
+	if result.Error != nil {
+		return errors.New("failed to insertsong in song table")
+	}
+	return nil
+}
+
+func IsSonginDB(ytID string, postgresClient *gorm.DB) (bool, error) {
+	var count int64
+
+	result := postgresClient.Model(&models.Song{}).Where("yt_id = ?", ytID).Count(&count)
+	if result.Error != nil {
+		return false, errors.New("postgres query failed")
+	}
+
+	return count > 0, nil
+}
