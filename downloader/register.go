@@ -19,51 +19,11 @@ import (
 
 var DOWNLOAD_PATH = "./downloads"
 
-// single song download-->process-->fingerprints in redis and metaData in postgres
-func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient *gorm.DB, url string) error {
-	//validate the url
-	if !utils.IsValidYouTubeURL(url) {
-		return errors.New("invalid url. please provide a valid youtube url")
-	}
-
-	//download the metadata of song
-	data, err := GetVideoDetails(url)
-	if err != nil {
-		return err
-	}
-	if len(data.Items) == 0 {
-		return errors.New("no video metadata found for the provided URL")
-	}
-
-	songData := data.Items[0]
-	ytID := songData.ID
-	songTitle := songData.Snippet.Title
-	songArtist := songData.Snippet.ChannelTitle
-	songID := utils.GenerateUniqueID()
-	log.Print(songID, ytID, songTitle, songArtist)
-
-	//song already in database
-	exists, err := db.IsSonginDB(ytID, postgresClient)
-	if err != nil {
-		return err
-	}
-	if exists {
-		log.Println("Song already exists in the database. Skipping download and processing.")
-		return nil
-	}
-
-	//downlaod the song
-	err = DownloadYTaudio(url, DOWNLOAD_PATH)
-	if err != nil {
-		return err
-	}
-
-	log.Print("downloaded the video")
-
+func ProcessSong(songTitle string, songID uint32) (map[uint32]models.Couple, error) {
 	// converted the song to wav
 	songPath, err := utils.FindDownloadedFile(songTitle, DOWNLOAD_PATH)
 	if err != nil {
-		return errors.New("song file can not be found")
+		return nil, errors.New("song file can not be found")
 	}
 	wav.ConvertToWAV(songPath, 1) //stereo to mono audio and .wav format
 
@@ -74,12 +34,15 @@ func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient
 	waveInfo, err := wav.ReadWavInfo(wavPath)
 	if err != nil {
 		log.Fatalf("error, %v", err)
+		return nil, err
 	}
 
 	// making wavbytes from samples
 	samples, err := wav.WavBytesToSamples(waveInfo.Data)
 	if err != nil {
 		log.Fatalf("error converting wav bytes to float64: %v", err)
+		return nil, err
+
 	}
 
 	log.Print("converted to samples")
@@ -90,6 +53,7 @@ func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient
 	spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
 	if err != nil {
 		log.Fatalf("error creating spectrogram: %v", err)
+		return nil, err
 	}
 	log.Print("created the spectogram")
 
@@ -110,20 +74,65 @@ func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient
 	fingerprints := audiofingerprint.CreateFingerprint(peaks, songID)
 	log.Print("created the fingerprints. count: ", len(fingerprints))
 
+	return fingerprints, nil
+}
+
+// single song download-->process-->fingerprints in redis and metaData in postgres
+func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient *gorm.DB, url string) error {
+
+	//download the metadata of song
+	data, err := GetVideoDetails(url)
+	if err != nil {
+		return err
+	}
+	if len(data.Items) == 0 {
+		return errors.New("no video metadata found for the provided URL")
+	}
+
+	songData := data.Items[0]
+	ytID := songData.ID
+	songTitle := songData.Snippet.Title
+	songArtist := songData.Snippet.ChannelTitle
+	songID := utils.GenerateUniqueID()
+	log.Print(songID, ytID, songTitle, songArtist)
+
+	//store the song in postgres
+	NewSong := models.Song{
+		ID:     songID,
+		Title:  songTitle,
+		Artist: songArtist,
+		YtID:   ytID,
+	}
+
+	//song already in database
+	exists, err := db.IsSonginDB(ytID, postgresClient)
+	if err != nil {
+		return err
+	}
+	if exists {
+		log.Println("Song already exists in the database. Skipping download and processing.")
+		return nil
+	}
+
+	//downlaod the song
+	err = DownloadYTaudio(url, DOWNLOAD_PATH)
+	if err != nil {
+		return err
+	}
+
+	log.Print("downloaded the video")
+
+	fingerprints, err := ProcessSong(songTitle, songID)
+	if err != nil {
+		return err
+
+	}
 	// save fingerprints to redis
 	err = db.StoreFingerprints(ctx, redisClient, fingerprints)
 	if err != nil {
 		log.Fatalf("Failed to store fingerprints: %v", err)
 	}
 	log.Print("succesfully saved the fingerprints in redis")
-
-	//store the song in postgres
-	NewSong := models.Song{
-		ID:     songID, // generate your own unique ID if needed
-		Title:  songTitle,
-		Artist: songArtist,
-		YtID:   ytID,
-	}
 
 	err = db.InsertSong(&NewSong, postgresClient)
 	if err != nil {
@@ -132,4 +141,74 @@ func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient
 	log.Print("succesfully saved the song in postgres")
 
 	return nil
+}
+
+// handle yt playlist download
+func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresClient *gorm.DB, playlistURL string) error {
+	//download the metadata of song
+	data, err := GetPlaylistDetails(playlistURL)
+	if err != nil {
+		return err
+	}
+	if len(data.Items) == 0 {
+		return errors.New("no video metadata found for the provided URL")
+	}
+
+	for x := range len(data.Items) {
+		songData := data.Items[x]
+		ytID := songData.ContentDetails.ID
+		songTitle := songData.Snippet.Title
+		songArtist := songData.Snippet.ChannelTitle
+		songID := utils.GenerateUniqueID()
+		log.Print(songID, ytID, songTitle, songArtist)
+
+		//song already in database
+		exists, err := db.IsSonginDB(ytID, postgresClient)
+		if err != nil {
+			return err
+		}
+		if exists {
+			log.Println("Song already exists in the database. Skipping download and processing.")
+
+		} else {
+			//downlaod the song
+			url := "https://www.youtube.com/watch?v=" + ytID
+			err = DownloadYTaudio(url, DOWNLOAD_PATH)
+			if err != nil {
+				return err
+			}
+
+			log.Print("downloaded the video")
+
+			fingerprints, err := ProcessSong(songTitle, songID)
+			if err != nil {
+				return err
+
+			}
+
+			// save fingerprints to redis
+			err = db.StoreFingerprints(ctx, redisClient, fingerprints)
+			if err != nil {
+				log.Fatalf("Failed to store fingerprints: %v", err)
+			}
+			log.Print("succesfully saved the fingerprints in redis")
+
+			//store the song in postgres
+			NewSong := models.Song{
+				ID:     songID,
+				Title:  songTitle,
+				Artist: songArtist,
+				YtID:   ytID,
+			}
+
+			err = db.InsertSong(&NewSong, postgresClient)
+			if err != nil {
+				log.Fatalf("Failed to store song: %v", err)
+			}
+			log.Print("succesfully saved the song in postgres")
+		}
+
+	}
+	return nil
+
 }

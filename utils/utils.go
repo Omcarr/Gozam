@@ -14,6 +14,7 @@ import (
 
 var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 var ytRegex = regexp.MustCompile(`^https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]{11}$`)
+var ytPlaylistRegex = regexp.MustCompile(`^https?://(www\.)?youtube\.com/playlist\?list=[\w-]+$`)
 
 func MoveFile(sourcePath string, destinationPath string) error {
 	srcFile, err := os.Open(sourcePath)
@@ -52,6 +53,19 @@ func GenerateUniqueID() uint32 {
 
 func IsValidYouTubeURL(url string) bool {
 	return ytRegex.MatchString(url)
+}
+
+func IsValidYouTubePlaylistURL(url string) bool {
+	return ytPlaylistRegex.MatchString(url)
+}
+
+func GetYouTubeURLType(url string) string {
+	if IsValidYouTubeURL(url) {
+		return "video"
+	} else if IsValidYouTubePlaylistURL(url) {
+		return "playlist"
+	}
+	return "invalid"
 }
 
 // normalizeString removes non-letter/digit characters and lowercases the string

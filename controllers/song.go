@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"gozam/downloader"
+	"gozam/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,9 +30,22 @@ func RegisterSongHandler(c *gin.Context, redisClient *redis.Client, postgresClie
 		return
 	}
 
-	err := downloader.RegisterSong(c.Request.Context(), redisClient, postgresClient, req.URL)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	urlType := utils.GetYouTubeURLType(req.URL)
+
+	if urlType == "video" {
+		err := downloader.RegisterSong(c.Request.Context(), redisClient, postgresClient, req.URL)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	} else if urlType == "playlist" {
+		err := downloader.RegisterPlaylist(c.Request.Context(), redisClient, postgresClient, req.URL)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or invalid URL in request body"})
 		return
 	}
 

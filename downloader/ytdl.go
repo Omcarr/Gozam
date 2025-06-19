@@ -11,21 +11,36 @@ import (
 	"time"
 )
 
-// Define outer structure
 type YouTubeResponse struct {
 	Items []VideoItem `json:"items"`
 }
 
-// Define video item
 type VideoItem struct {
 	ID      string  `json:"id"`
 	Snippet Snippet `json:"snippet"`
 }
 
-// Snippet info (title, description, thumbnails)
 type Snippet struct {
 	Title        string `json:"title"`
 	ChannelTitle string `json:"channelTitle"`
+}
+
+type YouTubePlaylistResponse struct {
+	Items []PlaylistVideoItem `json:"items"`
+}
+
+type PlaylistVideoItem struct {
+	Snippet        PlaylistSnippet        `json:"snippet"`
+	ContentDetails PlaylistContentDetails `json:"contentDetails"`
+}
+
+type PlaylistSnippet struct {
+	Title        string `json:"title"`
+	ChannelTitle string `json:"videoOwnerChannelTitle"`
+}
+
+type PlaylistContentDetails struct {
+	ID string `json:"videoId"`
 }
 
 func DownloadYTaudio(id, path string) error {
@@ -80,6 +95,38 @@ func GetVideoDetails(id string) (*YouTubeResponse, error) {
 	}
 
 	var ytResp YouTubeResponse
+	err = json.NewDecoder(response.Body).Decode(&ytResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ytResp, nil
+}
+
+func GetPlaylistDetails(id string) (*YouTubePlaylistResponse, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	parsedURL, err := url.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedId := parsedURL.Query().Get("list")
+
+	ytApiKey := os.Getenv("ytApiKey")
+	apiURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/playlistItems?playlistId=%s&key=%s&part=snippet,contentDetails", parsedId, ytApiKey)
+
+	response, err := client.Get(apiURL)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API call failed: %s", response.Status)
+	}
+
+	var ytResp YouTubePlaylistResponse
 	err = json.NewDecoder(response.Body).Decode(&ytResp)
 	if err != nil {
 		return nil, err
