@@ -9,9 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SongRouter(router *gin.Engine, redisClient *redis.Client, db *gorm.DB) {
+func SongRouter(router *gin.Engine, redisClient *redis.Client, postgresClient *gorm.DB) {
 	router.GET("/song", controllers.SongHealthCheck)
 	router.POST("/register_song", func(c *gin.Context) {
-		controllers.RegisterSongHandler(c, redisClient, db)
+		controllers.RegisterSongHandler(c, redisClient, postgresClient)
 	})
+	router.POST("/find_matches", func(c *gin.Context) {
+		controllers.FindMatchesHandler(c, postgresClient)
+	})
+
 }

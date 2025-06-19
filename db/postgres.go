@@ -49,3 +49,17 @@ func IsSonginDB(ytID string, postgresClient *gorm.DB) (bool, error) {
 
 	return count > 0, nil
 }
+
+func GetSongByID(songID uint32, postgresClient *gorm.DB) (models.Song, bool, error) {
+	var song models.Song
+
+	result := postgresClient.Where("id = ?", songID).First(&song)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return song, false, nil
+		}
+		return song, false, result.Error
+	}
+
+	return song, true, nil
+}

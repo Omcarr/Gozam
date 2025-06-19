@@ -38,6 +38,10 @@ func StoreFingerprints(ctx context.Context, client *redis.Client, fingerprints m
 			return err // or collect errors if partial failure is OK
 		}
 
+		// if err := client.SAdd(ctx, key, value).Err(); err != nil {
+		// 	return err
+		// }
+
 	}
 	return nil
 }

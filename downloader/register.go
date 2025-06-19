@@ -31,14 +31,14 @@ func ProcessSong(songTitle string, songID uint32) (map[uint32]models.Couple, err
 
 	// make wav into bytes
 	wavPath := strings.TrimSuffix(songPath, filepath.Ext(songPath)) + ".wav"
-	waveInfo, err := wav.ReadWavInfo(wavPath)
+	wavInfo, err := wav.ReadWavInfo(wavPath)
 	if err != nil {
 		log.Fatalf("error, %v", err)
 		return nil, err
 	}
 
 	// making wavbytes from samples
-	samples, err := wav.WavBytesToSamples(waveInfo.Data)
+	samples, err := wav.WavBytesToSamples(wavInfo.Data)
 	if err != nil {
 		log.Fatalf("error converting wav bytes to float64: %v", err)
 		return nil, err
@@ -50,7 +50,7 @@ func ProcessSong(songTitle string, songID uint32) (map[uint32]models.Couple, err
 	// log.Print(samples)
 
 	//creating spectogram
-	spectrogram, err := audiofingerprint.Spectrogram(samples, waveInfo.SampleRate)
+	spectrogram, err := audiofingerprint.Spectrogram(samples, wavInfo.SampleRate)
 	if err != nil {
 		log.Fatalf("error creating spectrogram: %v", err)
 		return nil, err
@@ -67,7 +67,7 @@ func ProcessSong(songTitle string, songID uint32) (map[uint32]models.Couple, err
 	// audiofingerprint.SaveSpectrogramImage(magSpec, output_path)
 
 	// extract peaks ie most significant frequencies from each band
-	peaks := audiofingerprint.ExtractPeaks(spectrogram, waveInfo.Duration)
+	peaks := audiofingerprint.ExtractPeaks(spectrogram, wavInfo.Duration)
 	log.Print("extracted the peaks")
 
 	//create fingerprints
@@ -211,4 +211,49 @@ func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresCl
 	}
 	return nil
 
+}
+
+// finds top 20 macthes for requested file
+func FindClientMatches(songPath string, postgresClient *gorm.DB) ([]audiofingerprint.Match, error) {
+	//convert to wav
+	wav.ConvertToWAV(songPath, 1) //stereo to mono audio and .wav format
+	log.Print("converted the video to wav")
+	// make wav into bytes
+
+	wavPath := strings.TrimSuffix(songPath, filepath.Ext(songPath)) + ".wav"
+	wavInfo, err := wav.ReadWavInfo(wavPath)
+	if err != nil {
+		log.Fatalf("error, %v", err)
+		return nil, err
+	}
+
+	// making wavbytes from samples
+	samples, err := wav.WavBytesToSamples(wavInfo.Data)
+	if err != nil {
+		log.Fatalf("error converting wav bytes to float64: %v", err)
+		return nil, err
+
+	}
+
+	log.Print("converted to samples")
+	// log.Print("erm what thw sigma")
+	// log.Print(samples)
+
+	matches, searchDuration, err := audiofingerprint.FindMatches(samples, wavInfo.Duration, wavInfo.SampleRate, postgresClient)
+	if err != nil {
+		log.Fatalf("failed to find matches: %v", err)
+		return nil, err
+	}
+
+	if len(matches) == 0 {
+		log.Println("\nNo match found.")
+		log.Printf("\nSearch took: %s\n", searchDuration)
+		return nil, nil
+	}
+
+	topMatches := matches
+	if len(matches) >= 20 {
+		topMatches = matches[:20]
+	}
+	return topMatches, nil
 }

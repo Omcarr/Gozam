@@ -1,10 +1,12 @@
 package audiofingerprint
 
 import (
-	// "fmt"
+	"fmt"
 	"gozam/db"
 	"gozam/models"
-	"log"
+	"gozam/utils"
+
+	"gorm.io/gorm"
 
 	// "log"
 	"math"
@@ -40,7 +42,12 @@ func CreateFingerprint(peaks []Peak, songID uint32) map[uint32]models.Couple {
 			address := createAddress(anchor, target)
 			anchorTimeMs := uint32(anchor.Time * 1000)
 
-			fingerprints[address] = models.Couple{anchorTimeMs, songID}
+			// fingerprints[address] = models.Couple{anchorTimeMs, songID}
+			fingerprints[address] = models.Couple{
+				AnchorTimeMs: anchorTimeMs,
+				SongID:       songID,
+			}
+
 		}
 	}
 
@@ -62,10 +69,34 @@ func createAddress(anchor, target Peak) uint32 {
 	return address
 }
 
-// FindMatchesFGP uses the sample fingerprint to find matching songs in the database.
-func FindMatchesFGP(sampleFingerprint map[uint32]uint32) ([]Match, time.Duration, error) {
+// FindMatches analyzes the audio sample to find matching songs in the database.
+func FindMatches(audioSample []float64, audioDuration float64, sampleRate int, postgresClient *gorm.DB) ([]Match, time.Duration, error) {
 	startTime := time.Now()
-	// logger := utils.GetLogger()
+
+	spectrogram, err := Spectrogram(audioSample, sampleRate)
+	if err != nil {
+		return nil, time.Since(startTime), fmt.Errorf("failed to get spectrogram of samples: %v", err)
+	}
+
+	peaks := ExtractPeaks(spectrogram, audioDuration)
+	sampleFingerprint := CreateFingerprint(peaks, utils.GenerateUniqueID())
+
+	sampleFingerprintMap := make(map[uint32]uint32)
+	for address, couple := range sampleFingerprint {
+		sampleFingerprintMap[address] = couple.AnchorTimeMs
+	}
+
+	matches, _, err := FindMatchesFGP(sampleFingerprintMap, postgresClient)
+	if err != nil {
+		return nil, time.Since(startTime), fmt.Errorf("failed to get matches: %v", err)
+	}
+
+	return matches, time.Since(startTime), nil
+}
+
+// FindMatchesFGP uses the sample fingerprint to find matching songs in the database.
+func FindMatchesFGP(sampleFingerprint map[uint32]uint32, postgresClient *gorm.DB) ([]Match, time.Duration, error) {
+	startTime := time.Now()
 
 	addresses := make([]uint32, 0, len(sampleFingerprint))
 	for address := range sampleFingerprint {
@@ -113,19 +144,17 @@ func FindMatchesFGP(sampleFingerprint map[uint32]uint32) ([]Match, time.Duration
 	var matchList []Match
 
 	for songID, points := range scores {
-		song, songExists, err := db.GetSongByID(songID)
-		log.Print(song)
+		song, songExists, err := db.GetSongByID(songID, postgresClient)
+		//log.Print(song)
 
 		if !songExists {
-			// logger.Info(fmt.Sprintf("song with ID (%v) doesn't exist", songID))
 			continue
 		}
 		if err != nil {
-			// logger.Info(fmt.Sprintf("failed to get song by ID (%v): %v", songID, err))
 			continue
 		}
 
-		match := Match{songID, song.Title, song.Artist, song.YouTubeID, timestamps[songID], points}
+		match := Match{songID, song.Title, song.Artist, song.YtID, timestamps[songID], points}
 		matchList = append(matchList, match)
 	}
 
