@@ -93,15 +93,18 @@ func RegisterSong(ctx context.Context, redisClient *redis.Client, postgresClient
 	ytID := songData.ID
 	songTitle := songData.Snippet.Title
 	songArtist := songData.Snippet.ChannelTitle
+	thumbnail := songData.Snippet.Thumbnail.Standard.Url
+
 	songID := utils.GenerateUniqueID()
-	log.Print(songID, ytID, songTitle, songArtist)
+	log.Print(songID, ytID, songTitle, songArtist, thumbnail)
 
 	//store the song in postgres
 	NewSong := models.Song{
-		ID:     songID,
-		Title:  songTitle,
-		Artist: songArtist,
-		YtID:   ytID,
+		ID:        songID,
+		Title:     songTitle,
+		Artist:    songArtist,
+		YtID:      ytID,
+		Thumbnail: thumbnail,
 	}
 
 	//song already in database
@@ -159,6 +162,7 @@ func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresCl
 		ytID := songData.ContentDetails.ID
 		songTitle := songData.Snippet.Title
 		songArtist := songData.Snippet.ChannelTitle
+		thumbnail := songData.Snippet.Thumbnail.Standard.Url
 		songID := utils.GenerateUniqueID()
 		log.Print(songID, ytID, songTitle, songArtist)
 
@@ -195,10 +199,11 @@ func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresCl
 
 			//store the song in postgres
 			NewSong := models.Song{
-				ID:     songID,
-				Title:  songTitle,
-				Artist: songArtist,
-				YtID:   ytID,
+				ID:        songID,
+				Title:     songTitle,
+				Artist:    songArtist,
+				YtID:      ytID,
+				Thumbnail: thumbnail,
 			}
 
 			err = db.InsertSong(&NewSong, postgresClient)

@@ -21,8 +21,17 @@ type VideoItem struct {
 }
 
 type Snippet struct {
-	Title        string `json:"title"`
-	ChannelTitle string `json:"channelTitle"`
+	Title        string    `json:"title"`
+	ChannelTitle string    `json:"channelTitle"`
+	Thumbnail    Thumbnail `json:"thumbnails"`
+}
+
+type Thumbnail struct {
+	Standard Standard `json:"standard"`
+}
+
+type Standard struct {
+	Url string `json:"url"`
 }
 
 type YouTubePlaylistResponse struct {
@@ -35,8 +44,9 @@ type PlaylistVideoItem struct {
 }
 
 type PlaylistSnippet struct {
-	Title        string `json:"title"`
-	ChannelTitle string `json:"videoOwnerChannelTitle"`
+	Title        string    `json:"title"`
+	ChannelTitle string    `json:"videoOwnerChannelTitle"`
+	Thumbnail    Thumbnail `json:"thumbnails"`
 }
 
 type PlaylistContentDetails struct {

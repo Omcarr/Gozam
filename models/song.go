@@ -10,4 +10,5 @@ type Song struct {
 	Title      string `json:"title"`
 	Artist     string `json:"artist"`
 	YtID       string `json:"ytID" gorm:"unique"`
+	Thumbnail  string `json:"thumbnail"`
 }

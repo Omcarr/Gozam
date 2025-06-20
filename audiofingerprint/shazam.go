@@ -153,8 +153,8 @@ func FindMatchesFGP(sampleFingerprint map[uint32]uint32, postgresClient *gorm.DB
 		if err != nil {
 			continue
 		}
-
-		match := Match{songID, song.Title, song.Artist, song.YtID, timestamps[songID], points}
+		startAt := (timestamps[songID] + 999) / 1000 //math.ceil
+		match := Match{songID, song.Title, song.Artist, song.YtID, startAt, points}
 		matchList = append(matchList, match)
 	}
 

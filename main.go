@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to establish redis connection")
 	}
-	log.Print(redisClient)
+	// log.Print(redisClient)
 
 	//postgres connection
 	var postgresClient *gorm.DB
@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Printf("failed to establish redis connection: %v", err)
 	}
-	log.Print(postgresClient)
+	// log.Print(postgresClient)
 
 	//routers
 	routers.UserRouter(router)
