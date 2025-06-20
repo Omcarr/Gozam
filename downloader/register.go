@@ -156,6 +156,7 @@ func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresCl
 	if len(data.Items) == 0 {
 		return errors.New("no video metadata found for the provided URL")
 	}
+	log.Print(len(data.Items))
 
 	for x := range len(data.Items) {
 		songData := data.Items[x]
@@ -179,7 +180,8 @@ func RegisterPlaylist(ctx context.Context, redisClient *redis.Client, postgresCl
 			url := "https://www.youtube.com/watch?v=" + ytID
 			err = DownloadYTaudio(url, DOWNLOAD_PATH)
 			if err != nil {
-				return err
+				log.Printf("Failed to download %s: %v", ytID, err)
+				continue
 			}
 
 			log.Print("downloaded the video")

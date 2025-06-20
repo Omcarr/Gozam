@@ -75,7 +75,8 @@ func DownloadYTaudio(id, path string) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Fatal("yt-dlp failed:", err)
+		log.Println("yt-dlp failed:", err)
+		return fmt.Errorf("yt-dlp error: %w", err)
 	}
 
 	return nil
@@ -124,7 +125,7 @@ func GetPlaylistDetails(id string) (*YouTubePlaylistResponse, error) {
 	parsedId := parsedURL.Query().Get("list")
 
 	ytApiKey := os.Getenv("ytApiKey")
-	apiURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/playlistItems?playlistId=%s&key=%s&part=snippet,contentDetails", parsedId, ytApiKey)
+	apiURL := fmt.Sprintf("https://www.googleapis.com/youtube/v3/playlistItems?playlistId=%s&key=%s&part=snippet,contentDetails&maxResults=50", parsedId, ytApiKey)
 
 	response, err := client.Get(apiURL)
 	if err != nil {
