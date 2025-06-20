@@ -1,4 +1,4 @@
 .env
-downloads/
-papers/
-tmp/
+server/downloads/
+server/papers/
+server/tmp/
