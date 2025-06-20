@@ -2,6 +2,7 @@ package main
 
 import (
 	"gozam/db"
+	"gozam/middleware"
 	"gozam/routers"
 	"log"
 
@@ -19,6 +20,7 @@ func main() {
 
 	//gin setup
 	router := gin.New()
+	router.Use(middleware.CORSMiddleware()) //CORS
 
 	//redis connection
 	redisClient, err := db.NewRedisClient()
