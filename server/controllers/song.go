@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"gozam/downloader"
 	"gozam/utils"
-	"log"
+	// "log"
 	"net/http"
 
 	"os"
 	"path/filepath"
-	"strings"
+	// "strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -87,14 +87,14 @@ func FindMatchesHandler(c *gin.Context, postgresClient *gorm.DB) {
 		return
 	}
 
-	wavPath := strings.TrimSuffix(tmpPath, filepath.Ext(tmpPath)) + ".wav"
-	// Now cleanup:
-	if err := os.Remove(tmpPath); err != nil {
-		log.Printf("Failed to delete uploaded file: %s", err)
-	}
+	// wavPath := strings.TrimSuffix(tmpPath, filepath.Ext(tmpPath)) + ".wav"
+	// // Now cleanup:
+	// if err := os.Remove(tmpPath); err != nil {
+	// 	log.Printf("Failed to delete uploaded file: %s", err)
+	// }
 
-	if err := os.Remove(wavPath); err != nil {
-		log.Printf("Failed to delete wav file: %s", err)
-	}
+	// if err := os.Remove(wavPath); err != nil {
+	// 	log.Printf("Failed to delete wav file: %s", err)
+	// }
 	c.JSON(http.StatusOK, gin.H{"matches": matches})
 }

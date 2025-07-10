@@ -14,7 +14,6 @@ const (
 	hopSize     = freqBinSize / 32
 )
 
-
 type Peak struct {
 	Time float64
 	Freq complex128
@@ -137,8 +136,6 @@ func MagnitudeSpectrogram(spec [][]complex128) ([][]float64, error) {
 	}
 	return magSpec, nil
 }
-
-
 
 // ExtractPeaks analyzes a spectrogram and extracts significant peaks in the frequency domain over time.
 func ExtractPeaks(spectrogram [][]complex128, audioDuration float64) []Peak {
